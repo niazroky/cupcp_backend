@@ -15,7 +15,9 @@ This repository contains the **backend** for the CUPCP (Computer Club of Physics
 
 ---
 
-## Project Structure
+## 📁 Project Structure
+
+```text
 CUPCProject/
 ├── accounts/
 ├── cupcp_backend/
