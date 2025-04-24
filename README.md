@@ -18,7 +18,7 @@ This repository contains the **backend** for the CUPCP (Computer Club of Physics
 ## 📁 Project Structure
 
 ```text
-CUPCProject/
+cupcp_backend/
 ├── accounts/
 ├── cupcp_backend/
 │   ├── __pycache__/
@@ -35,3 +35,64 @@ CUPCProject/
 ├── manage.py
 ├── README.md
 └── requirements.txt
+```
+
+---
+
+## 🚀 How to Run the Project Locally
+
+Follow these steps to set up and run the Django backend on your local machine:
+
+### 1. Clone the Repository
+
+```bash
+git clone https://github.com/your-username/cupcp_backend.git
+cd cupcp_backend
+```
+
+### 2. Create and Activate Virtual Environment
+
+```bash
+python -m venv venv
+source venv/bin/activate  # On Windows: venv\Scripts\activate
+```
+
+### 3. Install Required Packages
+
+```bash
+pip install -r requirements.txt
+```
+
+### 4. Set Up Environment Variables
+
+Create a `.env` file in the root directory and add your secret keys and settings:
+
+```ini
+SECRET_KEY=your-secret-key
+DEBUG=True
+And there are more...
+```
+
+### 5. Apply Migrations
+
+```bash
+python manage.py migrate
+```
+
+### 6. Create Superuser (Optional, for Admin Panel)
+
+```bash
+python manage.py createsuperuser
+```
+
+### 7. Run the Server
+
+```bash
+python manage.py runserver
+```
+
+---
+
+The backend will be running at `http://127.0.0.1:8000/` by default.
+
+Let me know if you'd like to also document API endpoints, authentication flow, or setup for production deployment.
