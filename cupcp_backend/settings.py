@@ -121,7 +121,9 @@ ROOT_URLCONF = "cupcp_backend.urls"
 # ───────────────────────────────────────────────────────
 
 # Allow requests only from trusted frontend origins (e.g., React app running locally)
-CORS_ALLOWED_ORIGINS = 'http://localhost:5173'
+CORS_ALLOWED_ORIGINS = [
+    'http://localhost:5173',  # Add other trusted origins here
+]
 
 
 # Enable credentials (cookies, authorization headers) in cross-origin requests
