@@ -1,6 +1,6 @@
 from pathlib import Path
 from datetime import timedelta
-from decouple import config, Csv
+# from decouple import config, Csv
 
 
 # ───────────────────────────────────────────────────────
@@ -121,7 +121,8 @@ ROOT_URLCONF = "cupcp_backend.urls"
 # ───────────────────────────────────────────────────────
 
 # Allow requests only from trusted frontend origins (e.g., React app running locally)
-CORS_ALLOWED_ORIGINS = config("CORS_ALLOWED_ORIGINS", cast=Csv())
+CORS_ALLOWED_ORIGINS = 'http://localhost:5173'
+
 
 # Enable credentials (cookies, authorization headers) in cross-origin requests
 CORS_ALLOW_CREDENTIALS = True
