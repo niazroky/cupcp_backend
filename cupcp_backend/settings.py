@@ -14,14 +14,10 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # Security Settings (IMPORTANT FOR PRODUCTION)
 # ───────────────────────────────────────────────────────
 
-# WARNING: Keep this key secret in production!
-SECRET_KEY = config("SECRET_KEY")
-
-# DEBUG mode should be False in production to avoid exposing sensitive data
-DEBUG = config("DEBUG", default=False, cast=bool) # Set to False in production
-
-# Allowed hosts: Define domains that can access the application (configure for deployment)
-ALLOWED_HOSTS = config("ALLOWED_HOSTS", cast=Csv())
+# Security
+SECRET_KEY = 'django-insecure-xm$j2n&)3!oqk@^nmu&ayv+k9qg@fdoi8+b!1cj8==su8z3)7z'
+DEBUG = False
+ALLOWED_HOSTS = ['127.0.0.1', 'localhost', '13.202.55.139']
 
 # ───────────────────────────────────────────────────────
 # Application Definition
@@ -90,8 +86,8 @@ REST_FRAMEWORK = {
 # ───────────────────────────────────────────────────────
 
 SIMPLE_JWT = {
-    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=config("ACCESS_TOKEN_LIFETIME_MINUTES", cast=int, default=30)),
-    'REFRESH_TOKEN_LIFETIME': timedelta(days=config("REFRESH_TOKEN_LIFETIME_DAYS", cast=int, default=1)),
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=30),
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=1),
     'AUTH_HEADER_TYPES': ('Bearer',),
 }
 
@@ -106,8 +102,12 @@ AUTH_USER_MODEL = 'accounts.User'
 # Teacher Email Whitelist (Role-Based Access)
 # ───────────────────────────────────────────────────────
 
-# List of emails that are explicitly allowed for teacher access
-ALLOWED_TEACHER_EMAILS = config("ALLOWED_TEACHER_EMAILS", cast=Csv())
+# Teacher Email Whitelist
+ALLOWED_TEACHER_EMAILS = [
+    'rnizam.physics@cu.ac.bd',
+    'dummy1@cu.ac.bd',
+    'dummy2@cu.ac.bd',
+]
 
 # ───────────────────────────────────────────────────────
 # URL Configuration
