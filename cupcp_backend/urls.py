@@ -13,7 +13,7 @@ urlpatterns = [
     # Empty route - homepage
     path('', home),  # 👈 Empty path
     # Django Admin Panel (For managing models, users, and permissions)
-    path('admin/', admin.site.urls),
+    path('api/admin/', admin.site.urls),
 
     # API Endpoints (Includes routes from the 'accounts' app)
     path('api/', include('accounts.urls')),
