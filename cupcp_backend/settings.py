@@ -17,7 +17,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # Security
 SECRET_KEY = 'django-insecure-xm$j2n&)3!oqk@^nmu&ayv+k9qg@fdoi8+b!1cj8==su8z3)7z'
 DEBUG = False
-ALLOWED_HOSTS = ['127.0.0.1', 'localhost', '13.202.55.139']
+ALLOWED_HOSTS = ['127.0.0.1', 'localhost', '13.202.55.139', 'www.cupcp.com', 'cupcp.com']
 
 # ───────────────────────────────────────────────────────
 # Application Definition
@@ -122,7 +122,9 @@ ROOT_URLCONF = "cupcp_backend.urls"
 
 # Allow requests only from trusted frontend origins (e.g., React app running locally)
 CORS_ALLOWED_ORIGINS = [
-    'http://localhost:5173',  # Add other trusted origins here
+    "http://localhost:5173",   # for local development
+    "https://cupcp.com",       # your live frontend domain
+    "https://www.cupcp.com",   # optional, if www works
 ]
 
 

@@ -16,8 +16,8 @@ urlpatterns = [
     path('admin/', admin.site.urls),
 
     # API Endpoints (Includes routes from the 'accounts' app)
-    path('api/', include('accounts.urls')),
+    path('auth/', include('accounts.urls')),
 
     # Student Manager: Exam Registration
-    path("api/student-manager/", include("student_manager.urls")),
+    path("student-manager/", include("student_manager.urls")),
 ]
