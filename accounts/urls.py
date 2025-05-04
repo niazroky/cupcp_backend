@@ -1,14 +1,19 @@
+# accounts/urls.py
+
 from django.urls import path
 from .views import (
     StudentRegisterAPIView,
     TeacherRegisterAPIView,
-    TeacherLoginAPIView,
     StudentLoginAPIView,
+    TeacherLoginAPIView,
+    LogoutAPIView,
+    UserRegistrationAPIView,
 )
 
-# ──────────────────────────────────────────────────────────────────────
-# API ENDPOINTS FOR USER AUTHENTICATION & REGISTRATION
-# ──────────────────────────────────────────────────────────────────────
+from rest_framework_simplejwt.views import (
+    TokenObtainPairView,
+    TokenRefreshView,
+)
 
 urlpatterns = [
     # Student Registration Endpoint
@@ -25,6 +30,13 @@ urlpatterns = [
         name='teacher-register'
     ),
 
+    # Student Login Endpoint
+    path(
+        'students/login/',
+        StudentLoginAPIView.as_view(),
+        name='student-login'
+    ),
+
     # Teacher Login Endpoint
     path(
         'teachers/login/',
@@ -32,10 +44,28 @@ urlpatterns = [
         name='teacher-login'
     ),
 
-    # Student Login Endpoint
+    # Logout Endpoint
+    path('logout/', 
+         LogoutAPIView.as_view(), 
+         name='token_logout'
+    ),
+
+    # User Profile & Generic Registration/Update Endpoint
     path(
-        'students/login/',
-        StudentLoginAPIView.as_view(),
-        name='student-login'
+        'user/',
+        UserRegistrationAPIView.as_view(),
+        name='user-profile'
+    ),
+
+    # Get Token Pair
+    path('api/token/', 
+         TokenObtainPairView.as_view(), 
+         name='token_obtain_pair'
+    ),
+
+    # Get Refresh Token
+    path('api/token/refresh/', 
+         TokenRefreshView.as_view(), 
+         name='token_refresh'
     ),
 ]

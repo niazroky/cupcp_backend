@@ -12,6 +12,7 @@ class ExamRegistrationSerializer(serializers.ModelSerializer):
             "full_name", 
             "varsity_id", 
             "session",
+            "phone_number",
             "payment_status", 
             "payment_slip",
             "student_status", 
@@ -19,12 +20,14 @@ class ExamRegistrationSerializer(serializers.ModelSerializer):
             "created_at", 
             "updated_at",
         ]
+        
         read_only_fields = [
             "id", 
             "user",
             "full_name", 
             "varsity_id", 
             "session",
+            "phone_number",
             "created_at", 
             "updated_at",
         ]

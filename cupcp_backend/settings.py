@@ -16,7 +16,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 # Security
 SECRET_KEY = 'django-insecure-xm$j2n&)3!oqk@^nmu&ayv+k9qg@fdoi8+b!1cj8==su8z3)7z'
-DEBUG = False
+DEBUG = True 
 ALLOWED_HOSTS = ['127.0.0.1', 'localhost', '13.202.55.139', 'www.cupcp.com', 'cupcp.com']
 
 # ───────────────────────────────────────────────────────
@@ -35,6 +35,7 @@ INSTALLED_APPS = [
     # Third-party packages
     'corsheaders',                    # Cross-Origin Resource Sharing (CORS)
     'rest_framework',                  # Django REST framework for API development
+    'rest_framework_simplejwt.token_blacklist',  # For JWT Token Blacklisting
 
     # Custom applications (specific to this project)
     'accounts',                         # User authentication and management
@@ -86,10 +87,19 @@ REST_FRAMEWORK = {
 # ───────────────────────────────────────────────────────
 
 SIMPLE_JWT = {
-    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=30),
-    'REFRESH_TOKEN_LIFETIME': timedelta(days=1),
-    'AUTH_HEADER_TYPES': ('Bearer',),
+    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=10),
+    "REFRESH_TOKEN_LIFETIME": timedelta(days=1),
+
+    # Rotate the refresh token and blacklist the previous one
+    "ROTATE_REFRESH_TOKENS": True,
+    "BLACKLIST_AFTER_ROTATION": True,
+
+    # # Optional: limit how late you can refresh
+    # "SLIDING_TOKEN_REFRESH_EXP_CLAIM": "refresh_exp",
+    # "SLIDING_TOKEN_LIFETIME": timedelta(minutes=30),
+    # "SLIDING_TOKEN_REFRESH_LIFETIME": timedelta(days=1),
 }
+
 
 # ───────────────────────────────────────────────────────
 # Custom User Model Configuration
@@ -206,9 +216,6 @@ USE_I18N = True
 # Enable timezone support
 USE_TZ = True
 
-# ───────────────────────────────────────────────────────
-# Static File Configuration
-# ───────────────────────────────────────────────────────
 
 # URL path for serving static files
 STATIC_URL = "/static/"

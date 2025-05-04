@@ -21,7 +21,8 @@ class ExamRegistration(models.Model):
     # Snapshot fields—never editable by student
     full_name   = models.CharField(max_length=255, editable=False)
     varsity_id  = models.CharField(max_length=8, null=True, blank=True, editable=False)
-    session     = models.CharField(max_length=50, null=True, blank=True, editable=False)
+    session     = models.CharField(max_length=7, null=True, blank=True, editable=False)
+    phone_number = models.CharField(max_length=11, null=True, blank=True)
 
     payment_status = models.CharField(max_length=3, choices=PAYMENT_STATUS_CHOICES)
     payment_slip   = models.CharField(max_length=255, null=True, blank=True, unique=True)
@@ -36,6 +37,7 @@ class ExamRegistration(models.Model):
         self.full_name  = self.user.full_name
         self.varsity_id = self.user.varsity_id
         self.session    = self.user.session
+        self.phone_number    = self.user.phone_number
         super().save(*args, **kwargs)
 
     def __str__(self):
