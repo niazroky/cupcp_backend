@@ -20,14 +20,28 @@ This repository contains the **backend** for the CUPCP (Computer Club of Physics
 ```text
 cupcp_backend/
 ├── accounts/
+    ├── __init__.py
+    ├── admin.py
+    ├── apps.py
+    ├── models.py
+    ├── serializers.py
+    ├── urls.py
+    ├── views.py
 ├── cupcp_backend/
-│   ├── __pycache__/
 │   ├── __init__.py
 │   ├── asgi.py
 │   ├── settings.py
 │   ├── urls.py
 │   ├── wsgi.py
 ├── student_manager/
+    ├── __init__.py
+    ├── admin.py
+    ├── apps.py
+    ├── models.py
+    ├── permissions.py
+    ├── serializers.py
+    ├── urls.py
+    ├── views.py
 ├── venv/
 ├── .env
 ├── .gitignore

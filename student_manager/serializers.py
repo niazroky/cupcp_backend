@@ -17,6 +17,7 @@ class ExamRegistrationSerializer(serializers.ModelSerializer):
             "payment_slip",
             "student_status", 
             "courses",
+            "hall_name",
             "created_at", 
             "updated_at",
         ]

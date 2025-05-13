@@ -16,7 +16,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 # Security
 SECRET_KEY = 'django-insecure-xm$j2n&)3!oqk@^nmu&ayv+k9qg@fdoi8+b!1cj8==su8z3)7z'
-DEBUG = True 
+DEBUG = False
 ALLOWED_HOSTS = ['127.0.0.1', 'localhost', '13.202.55.139', 'www.cupcp.com', 'cupcp.com']
 
 # ───────────────────────────────────────────────────────

@@ -1,10 +1,6 @@
-
-
-# accounts/serializers.py
-
 from rest_framework import serializers
 from django.conf import settings
-from django.contrib.auth.password_validation import validate_password
+# removed django.contrib.auth.password_validation.validate_password to simplify
 from .models import User
 import re
 
@@ -13,8 +9,9 @@ import re
 # ─────────────────────────────────────────────────────────────────────
 
 VARSITY_ID_REGEX = re.compile(r'^\d{8}$')
+# UPDATED: Simplified password regex: min 6 chars, at least one lowercase and one digit
 PASSWORD_REGEX = re.compile(
-    r'^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&#])[A-Za-z\d@$!%*?&#]{8,}$'
+    r'^(?=.*[a-z])(?=.*\d)[A-Za-z\d]{6,}$'
 )
 
 # ─────────────────────────────────────────────────────────────────────
@@ -34,13 +31,12 @@ class StudentRegistrationSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError("Varsity ID must be exactly 8 digits.")
         return value
 
-
     def validate_password(self, value):
+        # UPDATED: enforce only lowercase and number, min length 6
         if not PASSWORD_REGEX.match(value):
             raise serializers.ValidationError(
-                "Password must be at least 8 characters and include uppercase, lowercase, number, and special character."
+                "Password must be at least 6 characters and include a lowercase letter and a number."
             )
-        validate_password(value)
         return value
 
     def validate(self, data):
@@ -59,6 +55,7 @@ class StudentRegistrationSerializer(serializers.ModelSerializer):
             **validated_data
         )
 
+
 class TeacherRegistrationSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True)
     confirm_password = serializers.CharField(write_only=True)
@@ -74,11 +71,11 @@ class TeacherRegistrationSerializer(serializers.ModelSerializer):
         return value
 
     def validate_password(self, value):
+        # UPDATED: enforce only lowercase and number, min length 6
         if not PASSWORD_REGEX.match(value):
             raise serializers.ValidationError(
-                "Password must be at least 8 characters and include uppercase, lowercase, number, and special character."
+                "Password must be at least 6 characters and include a lowercase letter and a number."
             )
-        validate_password(value)
         return value
 
     def validate(self, data):
@@ -98,7 +95,7 @@ class TeacherRegistrationSerializer(serializers.ModelSerializer):
         )
 
 # ─────────────────────────────────────────────────────────────────────
-# LOGIN SERIALIZERS
+# LOGIN & OTHER SERIALIZERS (unchanged)
 # ─────────────────────────────────────────────────────────────────────
 
 class StudentLoginSerializer(serializers.Serializer):
@@ -109,22 +106,11 @@ class TeacherLoginSerializer(serializers.Serializer):
     email = serializers.EmailField()
     password = serializers.CharField(write_only=True)
 
-# ─────────────────────────────────────────────────────────────────────
-# LOGOUT SERIALIZERS
-# ─────────────────────────────────────────────────────────────────────
-
 class LogoutSerializer(serializers.Serializer):
-    """
-    Accepts a refresh token and validates that it is well-formed.
-    """
     refresh = serializers.CharField()
 
     def validate(self, attrs):
         return attrs
-    
-# ─────────────────────────────────────────────────────────────────────
-# PROFILE SERIALIZERS
-# ─────────────────────────────────────────────────────────────────────
 
 class UserSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True, required=True)
@@ -141,7 +127,9 @@ class UserSerializer(serializers.ModelSerializer):
     def validate(self, data):
         if data.get('password') != data.get('confirm_password'):
             raise serializers.ValidationError({'confirm_password': 'Passwords do not match.'})
-        validate_password(data['password'], user=User(**data))
+        # UPDATED: simplified check only against our regex
+        if not PASSWORD_REGEX.match(data['password']):
+            raise serializers.ValidationError({'password': 'Password must be at least 6 characters and include a lowercase letter and a number.'})
         return data
 
     def create(self, validated_data):
@@ -151,16 +139,6 @@ class UserSerializer(serializers.ModelSerializer):
             password=password,
             **validated_data
         )
-
-    def update(self, instance, validated_data):
-        if 'password' in validated_data:
-            password = validated_data.pop('password')
-            validated_data.pop('confirm_password', None)
-            instance.set_password(password)
-        for attr, value in validated_data.items():
-            setattr(instance, attr, value)
-        instance.save()
-        return instance
 
 class UserDetailSerializer(serializers.ModelSerializer):
     class Meta:
