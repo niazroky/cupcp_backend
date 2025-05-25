@@ -39,6 +39,9 @@ jobs:
             # Install any new dependencies
             pip install -r requirements.txt
 
+            # Ensure Postgres is up
+            sudo systemctl start postgresql
+
             # Make & apply migrations for your apps
             python manage.py makemigrations accounts
             python manage.py makemigrations student_manager
