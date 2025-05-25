@@ -1,3 +1,6 @@
+
+# accounts\serializers.py
+
 from rest_framework import serializers
 from django.conf import settings
 # removed django.contrib.auth.password_validation.validate_password to simplify

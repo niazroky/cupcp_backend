@@ -15,7 +15,6 @@ from .serializers import (
     TeacherRegistrationSerializer,
     StudentLoginSerializer,
     TeacherLoginSerializer,
-    LogoutSerializer,
     UserSerializer,
     UserDetailSerializer,
 )

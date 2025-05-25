@@ -1,6 +1,11 @@
+
+# Relative Path: cupcp_backend\settings.py
+
+
 from pathlib import Path
 from datetime import timedelta
-# from decouple import config, Csv
+from decouple import config, Csv
+import dj_database_url
 
 
 # ───────────────────────────────────────────────────────
@@ -15,9 +20,10 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # ───────────────────────────────────────────────────────
 
 # Security
-SECRET_KEY = 'django-insecure-xm$j2n&)3!oqk@^nmu&ayv+k9qg@fdoi8+b!1cj8==su8z3)7z'
-DEBUG = False
-ALLOWED_HOSTS = ['127.0.0.1', 'localhost', '13.202.55.139', 'www.cupcp.com', 'cupcp.com']
+
+SECRET_KEY = config('SECRET_KEY')
+DEBUG = config('DEBUG', default=False, cast=bool)
+ALLOWED_HOSTS = config('ALLOWED_HOSTS', cast=Csv())
 
 # ───────────────────────────────────────────────────────
 # Application Definition
@@ -87,7 +93,7 @@ REST_FRAMEWORK = {
 # ───────────────────────────────────────────────────────
 
 SIMPLE_JWT = {
-    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=10),
+    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=30),
     "REFRESH_TOKEN_LIFETIME": timedelta(days=1),
 
     # Rotate the refresh token and blacklist the previous one
@@ -112,12 +118,7 @@ AUTH_USER_MODEL = 'accounts.User'
 # Teacher Email Whitelist (Role-Based Access)
 # ───────────────────────────────────────────────────────
 
-# Teacher Email Whitelist
-ALLOWED_TEACHER_EMAILS = [
-    'rnizam.physics@cu.ac.bd',
-    'dummy1@cu.ac.bd',
-    'dummy2@cu.ac.bd',
-]
+ALLOWED_TEACHER_EMAILS = config('ALLOWED_TEACHER_EMAILS', cast=Csv())
 
 # ───────────────────────────────────────────────────────
 # URL Configuration
@@ -130,12 +131,7 @@ ROOT_URLCONF = "cupcp_backend.urls"
 # CORS (Cross-Origin Resource Sharing) Configuration
 # ───────────────────────────────────────────────────────
 
-# Allow requests only from trusted frontend origins (e.g., React app running locally)
-CORS_ALLOWED_ORIGINS = [
-    "http://localhost:5173",   # for local development
-    "https://cupcp.com",       # your live frontend domain
-    "https://www.cupcp.com",   # optional, if www works
-]
+CORS_ALLOWED_ORIGINS = config('CORS_ALLOWED_ORIGINS', cast=Csv())
 
 
 # Enable credentials (cookies, authorization headers) in cross-origin requests
@@ -173,12 +169,23 @@ WSGI_APPLICATION = "cupcp_backend.wsgi.application"
 # ───────────────────────────────────────────────────────
 
 # Default database configuration (using SQLite for development)
+# DATABASES = {
+#     "default": {
+#         "ENGINE": "django.db.backends.sqlite3",  # Database backend engine
+#         "NAME": BASE_DIR / "db.sqlite3",  # Database file location
+#     }
+# }
+
+# Use environment variable to set the database URL, defaulting to SQLite if not provided
+DATABASE_URL = config(
+    "DATABASE_URL",
+    default=f"sqlite:///{BASE_DIR / 'db.sqlite3'}"
+)
+
 DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.sqlite3",  # Database backend engine
-        "NAME": BASE_DIR / "db.sqlite3",  # Database file location
-    }
+    "default": dj_database_url.parse(DATABASE_URL, conn_max_age=600)
 }
+
 
 # ───────────────────────────────────────────────────────
 # Authentication & Password Validation

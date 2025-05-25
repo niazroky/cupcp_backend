@@ -1,0 +1,53 @@
+name: Deploy Django Backend to EC2
+
+# Trigger on pushes to main
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    name: SSH & Deploy to EC2
+
+    steps:
+      # 1) Check out your code
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      # 2) Set up SSH (write your private key, set perms, trust host)
+      - name: Setup SSH key
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.EC2_BACKEND_SSH_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan -H ${{ secrets.EC2_HOST }} >> ~/.ssh/known_hosts
+
+      # 3) SSH into EC2 and run your deploy commands
+      - name: SSH to EC2 and deploy
+        run: |
+          ssh ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} << 'EOF'
+            # Activate your virtualenv
+            source ~/venv/bin/activate
+
+            # Go to your backend directory
+            cd ${{ secrets.BACKEND_PATH }}
+
+            # Pull latest code
+            git pull origin main
+
+            # Install any new dependencies
+            pip install -r requirements.txt
+
+            # Make & apply migrations for your apps
+            python manage.py makemigrations accounts
+            python manage.py makemigrations student_manager
+            python manage.py migrate
+
+            # Collect static files
+            python manage.py collectstatic --noinput
+
+            # Restart Gunicorn & reload Nginx
+            sudo systemctl restart gunicorn
+            sudo systemctl reload nginx
+          EOF
