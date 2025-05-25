@@ -1,5 +1,4 @@
 
-
 # accounts/tests/test_account_api.py
 
 from django.urls import reverse
