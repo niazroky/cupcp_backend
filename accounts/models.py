@@ -1,22 +1,41 @@
+"""
+Django models for the accounts app.
 
-# accounts\models.py
+Defines a custom user model with role-based fields, managers,
+validators, and lifecycle hooks for data integrity and formatting.
+"""
 
-from django.db import models
-from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin, BaseUserManager
-from django.core.validators import RegexValidator
+# Relative Path: accounts/models.py
+
 from django.core.exceptions import ValidationError
+from django.core.validators import RegexValidator
+from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin
+from django.db import models
 
-# ───────────────────────────────────────────────────
-# USER MANAGER
-# ───────────────────────────────────────────────────
 
+# -----------------------------------------------------------------------------
+# User Manager
+# -----------------------------------------------------------------------------
 class UserManager(BaseUserManager):
     """
-    Custom user manager for handling user creation.
+    Manager for User model, handling creation of regular users and superusers.
     """
 
-    def create_user(self, email, full_name, role, phone_number=None, varsity_id=None, session=None, password=None, **extra_fields):
-        """Creates and returns a user with the given details."""
+    def create_user(
+        self,
+        email,
+        full_name,
+        role,
+        phone_number=None,
+        varsity_id=None,
+        session=None,
+        password=None,
+        **extra_fields
+    ):
+        """
+        Creates and saves a User with the given email, name, role, and optional fields.
+        Validates data before saving.
+        """
         if not email:
             raise ValueError("An email is required")
         email = self.normalize_email(email)
@@ -31,18 +50,18 @@ class UserManager(BaseUserManager):
             **extra_fields
         )
         user.set_password(password)
-        user.full_clean()  # validate before saving
+        user.full_clean()
         user.save(using=self._db)
         return user
 
     def create_superuser(self, email, password=None, **extra_fields):
-        """Creates and returns a superuser (always assigned 'teacher' role)."""
-        # Ensure role is set to 'teacher'
+        """
+        Creates and returns a superuser with admin privileges and 'teacher' role.
+        """
         extra_fields.setdefault('role', 'teacher')
-        # Extract and remove fields from extra_fields
         full_name = extra_fields.pop('full_name', 'Admin')
         phone_number = extra_fields.pop('phone_number', None)
-        role = extra_fields.pop('role')  # remove to avoid duplication
+        role = extra_fields.pop('role')
 
         user = self.create_user(
             email=email,
@@ -60,23 +79,19 @@ class UserManager(BaseUserManager):
         return user
 
 
-# ───────────────────────────────────────────────────
-# VALIDATORS & CHOICES
-# ───────────────────────────────────────────────────
-
-# Varsity ID: exactly 8 digits
+# -----------------------------------------------------------------------------
+# Validators and Choice Definitions
+# -----------------------------------------------------------------------------
 VARSITY_ID_VALIDATOR = RegexValidator(
     regex=r'^\d{8}$',
     message='Varsity ID must be exactly 8 digits.'
 )
 
-# Phone number: exactly 11 digits
 PHONE_VALIDATOR = RegexValidator(
     regex=r'^\d{11}$',
     message='Phone number must be exactly 11 digits.'
 )
 
-# Session choices: 2025-26 down to 2015-16
 SESSION_CHOICES = [
     (f"{yr}-{str(yr+1)[-2:]}", f"{yr}-{str(yr+1)[-2:]}")
     for yr in range(2025, 2014, -1)
@@ -93,18 +108,21 @@ GENDER_CHOICES = (
 )
 
 
+# -----------------------------------------------------------------------------
+# Custom User Model
+# -----------------------------------------------------------------------------
 class User(AbstractBaseUser, PermissionsMixin):
     """
-    Custom User model for both Students and Teachers.
-    - Students use `varsity_id` for login.
-    - Teachers and admins use `email` for login.
+    Custom user model supporting Student and Teacher roles.
+
+    - Students authenticate via varsity_id.
+    - Teachers/admins authenticate via email.
     """
 
     email = models.EmailField(unique=True)
     full_name = models.CharField(max_length=255)
     role = models.CharField(max_length=10, choices=ROLE_CHOICES)
 
-    # Contact & Student-specific fields
     phone_number = models.CharField(
         max_length=11,
         unique=True,
@@ -127,57 +145,52 @@ class User(AbstractBaseUser, PermissionsMixin):
         blank=True,
         help_text="Academic session (e.g., 2020-21) for students."
     )
-
     gender = models.CharField(
-    max_length=6,
-    choices=GENDER_CHOICES,
-    null=True,       # or False if you require gender on all users
-    blank=True,
-    help_text="Select gender: male=Male, female=Female (students only)"
+        max_length=6,
+        choices=GENDER_CHOICES,
+        null=True,
+        blank=True,
+        help_text="Select gender: male=Male, female=Female (students only)"
     )
 
-    # Admin and permissions-related fields
     is_active = models.BooleanField(default=True)
     is_staff = models.BooleanField(default=False)
 
     objects = UserManager()
 
-    USERNAME_FIELD = "email"
-    REQUIRED_FIELDS = ["full_name", "phone_number"]
+    USERNAME_FIELD = 'email'
+    REQUIRED_FIELDS = ['full_name', 'phone_number']
 
     def __str__(self):
         return f"{self.full_name} ({self.get_role_display()})"
 
     def clean(self):
         """
-        Custom validations:
-        - Ensure varsity_id and session are set and valid for students.
+        Validates role-specific constraints:
+        - Students must have varsity_id, session, and gender.
+        - Teachers must not have varsity_id, session, or gender.
         """
         super().clean()
-        # Validate student-specific fields
         if self.role == 'student':
             if not self.varsity_id:
                 raise ValidationError({'varsity_id': 'Varsity ID is required for students.'})
             if not self.session:
                 raise ValidationError({'session': 'Session is required for students.'})
-        # Teachers should not have varsity_id or session
-        if self.role == 'teacher':
+            if not self.gender:
+                raise ValidationError({'gender': 'Gender is required for students.'})
+        elif self.role == 'teacher':
             if self.varsity_id:
                 raise ValidationError({'varsity_id': 'Teachers should not have a Varsity ID.'})
             if self.session:
                 raise ValidationError({'session': 'Teachers should not have a session.'})
-        # Enforce gender only for students
-        if self.role == 'student':
-            if not self.gender:
-                raise ValidationError({'gender': 'Gender is required for students.'})
-        elif self.role == 'teacher':
             if self.gender:
                 raise ValidationError({'gender': 'Gender should not be provided for teachers.'})
 
     def save(self, *args, **kwargs):
-        # Ensure full name is stored in uppercase
+        """
+        Overrides save to enforce uppercase full_name and validate before persisting.
+        """
         if self.full_name:
             self.full_name = self.full_name.upper()
-        # Clean before saving
         self.full_clean()
         super().save(*args, **kwargs)

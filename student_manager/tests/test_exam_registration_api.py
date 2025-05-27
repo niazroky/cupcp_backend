@@ -1,5 +1,10 @@
+"""
+API Tests for Exam Registration endpoints in the student_manager app.
 
-# student_manager/tests/test_exam_registration_api.py
+Covers student submission, retrieval, and teacher summary access with JWT authentication.
+"""
+
+# Relative Path: cupcp_backend/student_manager/tests/test_exam_registration_api.py
 
 from django.urls import reverse
 from rest_framework import status
@@ -12,16 +17,19 @@ from student_manager.models import ExamRegistration
 
 class ExamRegistrationAPITests(APITestCase):
     """
-    Test suite for ExamRegistration endpoints in the student_manager app.
-    Covers student registration, retrieval, and teacher summary access.
+    Test suite for ExamRegistration endpoints.
+
+    Ensures correct behavior for students and teachers:
+    - Students can create and retrieve their own registrations.
+    - Teachers can view summary of all registrations.
+    - Permissions enforced appropriately.
     """
 
     def setUp(self):
         """
-        Set up initial users and endpoints for testing.
-        Creates one student and one teacher with JWT authentication headers.
+        Initialize test users, URLs, headers, and sample data.
         """
-        # Create a student user for exam registration tests
+        # Create student and teacher users
         self.student = User.objects.create_user(
             email="student1@example.com",
             full_name="Student One",
@@ -32,7 +40,6 @@ class ExamRegistrationAPITests(APITestCase):
             gender="female",
             password="studentpass"
         )
-        # Create a teacher user for summary access tests
         self.teacher = User.objects.create_user(
             email="teacher1@example.com",
             full_name="Teacher One",
@@ -41,20 +48,19 @@ class ExamRegistrationAPITests(APITestCase):
             password="teacherpass"
         )
 
-        # Resolve endpoint URLs by their names
+        # Endpoint URLs
         self.register_url = reverse('my-exam-registration')
         self.summary_url = reverse('exam-reg-summary')
 
-        # Helper function to generate JWT authentication header
+        # JWT auth headers
         def _token_header(user):
             token = RefreshToken.for_user(user).access_token
             return {'HTTP_AUTHORIZATION': f'Bearer {token}'}
 
-        # Prepare headers for student and teacher
         self.student_header = _token_header(self.student)
         self.teacher_header = _token_header(self.teacher)
 
-        # Sample payload for creating an exam registration
+        # Valid registration payload
         self.valid_data = {
             'payment_status': 'Yes',
             'payment_slip': 'SLIP1001',
@@ -63,10 +69,13 @@ class ExamRegistrationAPITests(APITestCase):
             'hall_name': 'Alaol Hall'
         }
 
+    # ---------------------
+    # Student Registration Tests
+    # ---------------------
+
     def test_student_registration_success(self):
         """
-        Ensure a student can successfully POST exam registration data.
-        Verifies HTTP 201 and correct database entry.
+        Students can successfully POST exam registration data.
         """
         response = self.client.post(
             self.register_url,
@@ -74,38 +83,32 @@ class ExamRegistrationAPITests(APITestCase):
             format='json',
             **self.student_header
         )
-        # Expect creation status
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         reg = ExamRegistration.objects.get(user=self.student)
-        # Check that the payment_slip was stored correctly
         self.assertEqual(reg.payment_slip, self.valid_data['payment_slip'])
 
     def test_student_registration_missing_payment_slip(self):
         """
-        Verify behavior when payment_slip is omitted.
-        Current implementation allows creation; payment_slip should default to blank.
+        Missing payment_slip should default to blank and allow creation.
         """
-        incomplete = self.valid_data.copy()
-        incomplete.pop('payment_slip')
+        data = self.valid_data.copy()
+        data.pop('payment_slip')
 
         response = self.client.post(
             self.register_url,
-            incomplete,
+            data,
             format='json',
             **self.student_header
         )
-        # Implementation permits missing payment_slip
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         reg = ExamRegistration.objects.get(user=self.student)
-        # Confirm default behavior for missing field
         self.assertTrue(reg.payment_slip in (None, ''))
 
     def test_student_can_retrieve_own_registration(self):
         """
-        After registering, a student should be able to GET their own registration.
-        Response structure contains a dict with 'registration' key.
+        After registration, students can GET their own registration details.
         """
-        # Create registration for student
+        # Create registration first
         self.client.post(
             self.register_url,
             self.valid_data,
@@ -118,20 +121,17 @@ class ExamRegistrationAPITests(APITestCase):
             format='json',
             **self.student_header
         )
-        # Expect successful retrieval
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        # Response payload should include registration details
         self.assertIsInstance(response.data, dict)
         self.assertIn('registration', response.data)
 
         reg_data = response.data['registration']
-        # Validate specific fields in the returned data
         self.assertEqual(reg_data['payment_slip'], self.valid_data['payment_slip'])
         self.assertEqual(reg_data['hall_name'], self.valid_data['hall_name'])
 
     def test_student_cannot_view_summary(self):
         """
-        Ensure students are forbidden from accessing the summary endpoint.
+        Students should receive 403 when accessing summary endpoint.
         """
         response = self.client.get(
             self.summary_url,
@@ -140,10 +140,13 @@ class ExamRegistrationAPITests(APITestCase):
         )
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
+    # ---------------------
+    # Teacher Access Tests
+    # ---------------------
+
     def test_teacher_can_register_for_student_endpoint(self):
         """
-        Confirm that teachers currently can POST to the student registration endpoint.
-        This may be changed in future for stricter permissions.
+        Teachers can POST to the registration endpoint (current behavior).
         """
         response = self.client.post(
             self.register_url,
@@ -152,22 +155,21 @@ class ExamRegistrationAPITests(APITestCase):
             **self.teacher_header
         )
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-        # Verify registration record associated with teacher
-        self.assertTrue(ExamRegistration.objects.filter(user=self.teacher).exists())
+        self.assertTrue(
+            ExamRegistration.objects.filter(user=self.teacher).exists()
+        )
 
     def test_teacher_can_view_summary(self):
         """
-        Verify that teachers can GET a list of all registrations via summary endpoint.
-        Ensures multiple records are returned correctly.
+        Teachers can GET a summary list of all registrations.
         """
-        # Student one registers
+        # Create two registrations
         self.client.post(
             self.register_url,
             self.valid_data,
             format='json',
             **self.student_header
         )
-        # Student two registers
         student2 = User.objects.create_user(
             email="student2@example.com",
             full_name="Student Two",
@@ -194,10 +196,8 @@ class ExamRegistrationAPITests(APITestCase):
             **self.teacher_header
         )
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        # Ensure the summary returns a list of two items
         self.assertIsInstance(response.data, list)
         self.assertEqual(len(response.data), 2)
         for item in response.data:
-            # Check key fields exist in each summary entry
             self.assertIn('payment_status', item)
             self.assertIn('courses', item)

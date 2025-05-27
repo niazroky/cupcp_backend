@@ -1,236 +1,190 @@
+"""
+Django settings for cupcp_backend project.
 
-# Relative Path: cupcp_backend\settings.py
+This configuration file uses environment variables for sensitive settings
+and follows best practices for production readiness with clearly documented sections.
+"""
 
+# Relative Path: cupcp_backend/settings.py
 
-from pathlib import Path
-from datetime import timedelta
-from decouple import config, Csv
 import dj_database_url
+from datetime import timedelta
+from pathlib import Path
+
+from decouple import Csv, config
 
 
-# ───────────────────────────────────────────────────────
-# Project Paths and Directories
-# ───────────────────────────────────────────────────────
-
-# Define the base directory of the project
+# -----------------------------------------------------------------------------
+# Base Directory
+# -----------------------------------------------------------------------------
+# Define the project root directory for building file paths dynamically.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-# ───────────────────────────────────────────────────────
-# Security Settings (IMPORTANT FOR PRODUCTION)
-# ───────────────────────────────────────────────────────
 
-# Security
-
+# -----------------------------------------------------------------------------
+# Security and Debug
+# -----------------------------------------------------------------------------
+# SECRET_KEY: Keep this value secret in production; loaded from environment.
 SECRET_KEY = config('SECRET_KEY')
+
+# DEBUG: Disable in production for performance and security.
 DEBUG = config('DEBUG', default=False, cast=bool)
+
+# ALLOWED_HOSTS: List of hosts/domains this site can serve.
 ALLOWED_HOSTS = config('ALLOWED_HOSTS', cast=Csv())
 
-# ───────────────────────────────────────────────────────
-# Application Definition
-# ───────────────────────────────────────────────────────
 
+# -----------------------------------------------------------------------------
+# Installed Applications
+# -----------------------------------------------------------------------------
 INSTALLED_APPS = [
-    # Default Django apps for core functionalities
-    'django.contrib.admin',          # Admin panel
-    'django.contrib.auth',           # Authentication system
-    'django.contrib.contenttypes',   # Content type framework
-    'django.contrib.sessions',       # User session management
-    'django.contrib.messages',       # Messaging framework
-    'django.contrib.staticfiles',    # Static file handling (CSS, JS, images)
+    # Django core apps
+    'django.contrib.admin',
+    'django.contrib.auth',
+    'django.contrib.contenttypes',
+    'django.contrib.sessions',
+    'django.contrib.messages',
+    'django.contrib.staticfiles',
 
-    # Third-party packages
-    'corsheaders',                    # Cross-Origin Resource Sharing (CORS)
-    'rest_framework',                  # Django REST framework for API development
-    'rest_framework_simplejwt.token_blacklist',  # For JWT Token Blacklisting
+    # Third-party apps
+    'corsheaders',  # Handles CORS headers
+    'rest_framework',  # API framework
+    'rest_framework_simplejwt.token_blacklist',  # JWT token blacklisting
 
-    # Custom applications (specific to this project)
-    'accounts',                         # User authentication and management
-    'student_manager',                      
+    # Local apps
+    'accounts',  # Custom user management
+    'student_manager',  # Student records and operations
 ]
 
-# ───────────────────────────────────────────────────────
-# Middleware Configuration
-# ───────────────────────────────────────────────────────
 
+# -----------------------------------------------------------------------------
+# Middleware
+# -----------------------------------------------------------------------------
 MIDDLEWARE = [
-    # Handles Cross-Origin Resource Sharing (CORS) for frontend-backend communication
-    'corsheaders.middleware.CorsMiddleware',
-
-    # Security middleware for enforcing best security practices
-    'django.middleware.security.SecurityMiddleware',
-
-    # Session management middleware
-    'django.contrib.sessions.middleware.SessionMiddleware',
-
-    # Middleware to handle standard HTTP request processing
-    'django.middleware.common.CommonMiddleware',
-
-    # Protects against Cross-Site Request Forgery (CSRF) attacks
-    'django.middleware.csrf.CsrfViewMiddleware',
-
-    # Authentication middleware (manages user authentication state)
-    'django.contrib.auth.middleware.AuthenticationMiddleware',
-
-    # Middleware for handling framework-level messages (e.g., success/error messages)
-    'django.contrib.messages.middleware.MessageMiddleware',
-
-    # Prevents clickjacking attacks by controlling iframe embedding
-    'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'corsheaders.middleware.CorsMiddleware',  # CORS support
+    'django.middleware.security.SecurityMiddleware',  # Security enhancements
+    'django.contrib.sessions.middleware.SessionMiddleware',  # Session management
+    'django.middleware.common.CommonMiddleware',  # Common HTTP middleware
+    'django.middleware.csrf.CsrfViewMiddleware',  # CSRF protection
+    'django.contrib.auth.middleware.AuthenticationMiddleware',  # Auth support
+    'django.contrib.messages.middleware.MessageMiddleware',  # Flash messages
+    'django.middleware.clickjacking.XFrameOptionsMiddleware',  # Clickjacking prevention
 ]
 
-# ───────────────────────────────────────────────────────
-# Django REST Framework Configuration
-# ───────────────────────────────────────────────────────
 
-REST_FRAMEWORK = {
-    'DEFAULT_AUTHENTICATION_CLASSES': (
-        'rest_framework_simplejwt.authentication.JWTAuthentication',  # JWT-based authentication
-    ),
-}
-
-# ───────────────────────────────────────────────────────
-# JWT (JSON Web Token) Authentication Settings
-# ───────────────────────────────────────────────────────
-
-SIMPLE_JWT = {
-    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=30),
-    "REFRESH_TOKEN_LIFETIME": timedelta(days=1),
-
-    # Rotate the refresh token and blacklist the previous one
-    "ROTATE_REFRESH_TOKENS": True,
-    "BLACKLIST_AFTER_ROTATION": True,
-
-    # # Optional: limit how late you can refresh
-    # "SLIDING_TOKEN_REFRESH_EXP_CLAIM": "refresh_exp",
-    # "SLIDING_TOKEN_LIFETIME": timedelta(minutes=30),
-    # "SLIDING_TOKEN_REFRESH_LIFETIME": timedelta(days=1),
-}
-
-
-# ───────────────────────────────────────────────────────
-# Custom User Model Configuration
-# ───────────────────────────────────────────────────────
-
-# Use a custom user model from the 'accounts' app instead of Django's default user model
-AUTH_USER_MODEL = 'accounts.User'
-
-# ───────────────────────────────────────────────────────
-# Teacher Email Whitelist (Role-Based Access)
-# ───────────────────────────────────────────────────────
-
-ALLOWED_TEACHER_EMAILS = config('ALLOWED_TEACHER_EMAILS', cast=Csv())
-
-# ───────────────────────────────────────────────────────
+# -----------------------------------------------------------------------------
 # URL Configuration
-# ───────────────────────────────────────────────────────
-
-# Specifies the root URL configuration file for URL routing
-ROOT_URLCONF = "cupcp_backend.urls"
-
-# ───────────────────────────────────────────────────────
-# CORS (Cross-Origin Resource Sharing) Configuration
-# ───────────────────────────────────────────────────────
-
-CORS_ALLOWED_ORIGINS = config('CORS_ALLOWED_ORIGINS', cast=Csv())
+# -----------------------------------------------------------------------------
+ROOT_URLCONF = 'cupcp_backend.urls'
 
 
-# Enable credentials (cookies, authorization headers) in cross-origin requests
-CORS_ALLOW_CREDENTIALS = True
-
-# ───────────────────────────────────────────────────────
-# Template Configuration
-# ───────────────────────────────────────────────────────
-
+# -----------------------------------------------------------------------------
+# Templates
+# -----------------------------------------------------------------------------
+# Define template engine settings and directories.
 TEMPLATES = [
     {
-        "BACKEND": "django.template.backends.django.DjangoTemplates",  # Use Django's template engine
-        "DIRS": [],  # Directories where Django should look for templates (add paths if needed)
-        "APP_DIRS": True,  # Enable template loading from installed apps
-        "OPTIONS": {
-            "context_processors": [  # Context processors make specific variables available in templates
-                "django.template.context_processors.debug",
-                "django.template.context_processors.request",
-                "django.contrib.auth.context_processors.auth",
-                "django.contrib.messages.context_processors.messages",
+        'BACKEND': 'django.template.backends.django.DjangoTemplates',
+        'DIRS': [],  # Add paths to custom template directories if needed
+        'APP_DIRS': True,  # Auto-discover templates in app directories
+        'OPTIONS': {
+            'context_processors': [
+                'django.template.context_processors.debug',
+                'django.template.context_processors.request',
+                'django.contrib.auth.context_processors.auth',
+                'django.contrib.messages.context_processors.messages',
             ],
         },
     },
 ]
 
-# ───────────────────────────────────────────────────────
-# WSGI Application Configuration
-# ───────────────────────────────────────────────────────
 
-# WSGI application entry point for serving the Django project
-WSGI_APPLICATION = "cupcp_backend.wsgi.application"
+# -----------------------------------------------------------------------------
+# WSGI Application
+# -----------------------------------------------------------------------------
+WSGI_APPLICATION = 'cupcp_backend.wsgi.application'
 
-# ───────────────────────────────────────────────────────
-# Database Configuration
-# ───────────────────────────────────────────────────────
 
-# Default database configuration (using SQLite for development)
-# DATABASES = {
-#     "default": {
-#         "ENGINE": "django.db.backends.sqlite3",  # Database backend engine
-#         "NAME": BASE_DIR / "db.sqlite3",  # Database file location
-#     }
-# }
-
-# Use environment variable to set the database URL, defaulting to SQLite if not provided
+# -----------------------------------------------------------------------------
+# Database
+# -----------------------------------------------------------------------------
+# DATABASE_URL: Use environment variable or default to SQLite.
 DATABASE_URL = config(
-    "DATABASE_URL",
+    'DATABASE_URL',
     default=f"sqlite:///{BASE_DIR / 'db.sqlite3'}"
 )
 
 DATABASES = {
-    "default": dj_database_url.parse(DATABASE_URL, conn_max_age=600)
+    'default': dj_database_url.parse(
+        DATABASE_URL,
+        conn_max_age=600,
+    )
 }
 
 
-# ───────────────────────────────────────────────────────
-# Authentication & Password Validation
-# ───────────────────────────────────────────────────────
+# -----------------------------------------------------------------------------
+# Authentication
+# -----------------------------------------------------------------------------
+# Custom user model for extending default Django user.
+AUTH_USER_MODEL = 'accounts.User'
 
-# Configure password validation to enforce strong password policies
+# Allowed teacher emails for role-based access control.
+ALLOWED_TEACHER_EMAILS = config('ALLOWED_TEACHER_EMAILS', cast=Csv())
+
+
+# -----------------------------------------------------------------------------
+# Password Validation
+# -----------------------------------------------------------------------------
 AUTH_PASSWORD_VALIDATORS = [
-    {
-        "NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator",
-    },
-    {
-        "NAME": "django.contrib.auth.password_validation.MinimumLengthValidator",
-    },
-    {
-        "NAME": "django.contrib.auth.password_validation.CommonPasswordValidator",
-    },
-    {
-        "NAME": "django.contrib.auth.password_validation.NumericPasswordValidator",
-    },
+    {'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator'},
+    {'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator'},
+    {'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator'},
+    {'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator'},
 ]
 
-# ───────────────────────────────────────────────────────
-# Internationalization & Localization Settings
-# ───────────────────────────────────────────────────────
 
-# Default language code
-LANGUAGE_CODE = "en-us"
-
-# Time zone settings
-TIME_ZONE = "UTC"
-
-# Enable Django's internationalization framework
-USE_I18N = True
-
-# Enable timezone support
-USE_TZ = True
+# -----------------------------------------------------------------------------
+# Internationalization
+# -----------------------------------------------------------------------------
+LANGUAGE_CODE = 'en-us'
+TIME_ZONE = 'UTC'
+USE_I18N = True  # Internationalization
+USE_L10N = True  # Locale-aware formatting
+USE_TZ = True  # Timezone support
 
 
-# URL path for serving static files
-STATIC_URL = "/static/"
-STATIC_ROOT = BASE_DIR / "staticfiles"
+# -----------------------------------------------------------------------------
+# Static Files (CSS, JavaScript, Images)
+# -----------------------------------------------------------------------------
+STATIC_URL = '/static/'
+STATIC_ROOT = BASE_DIR / 'staticfiles'
 
-# ───────────────────────────────────────────────────────
+
+# -----------------------------------------------------------------------------
+# CORS Settings
+# -----------------------------------------------------------------------------
+CORS_ALLOWED_ORIGINS = config('CORS_ALLOWED_ORIGINS', cast=Csv())
+CORS_ALLOW_CREDENTIALS = True
+
+
+# -----------------------------------------------------------------------------
+# REST Framework & JWT
+# -----------------------------------------------------------------------------
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
+    ),
+}
+
+SIMPLE_JWT = {
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=30),
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=1),
+    'ROTATE_REFRESH_TOKENS': True,
+    'BLACKLIST_AFTER_ROTATION': True,
+}
+
+
+# -----------------------------------------------------------------------------
 # Default Primary Key Field Type
-# ───────────────────────────────────────────────────────
-
-# Default auto field type for primary keys in models
-DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+# -----------------------------------------------------------------------------
+DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'

@@ -1,15 +1,21 @@
-# Custom Django App
-# accounts\views.py
+"""
+API views for the accounts app in cupcp_backend.
 
+Provides endpoints for student/teacher registration, authentication,
+logout, and user profile management with JWT integration.
+"""
 
-from rest_framework import status
-from rest_framework.views import APIView
-from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticated
+# Relative Path: accounts/views.py
+
 from django.contrib.auth import authenticate
+from rest_framework import status
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
+from rest_framework.views import APIView
+from rest_framework_simplejwt.exceptions import TokenError
 from rest_framework_simplejwt.tokens import RefreshToken
-from rest_framework_simplejwt.tokens import RefreshToken, TokenError
 
+from .models import User
 from .serializers import (
     StudentRegistrationSerializer,
     TeacherRegistrationSerializer,
@@ -18,39 +24,53 @@ from .serializers import (
     UserSerializer,
     UserDetailSerializer,
 )
-from .models import User
 
+
+# -----------------------------------------------------------------------------
+# Registration Views
+# -----------------------------------------------------------------------------
 class StudentRegisterAPIView(APIView):
     """
-    API View for student registration.
+    Handles student registration.
+
+    POST: Validates and creates a new student user.
     """
     def post(self, request):
         serializer = StudentRegistrationSerializer(data=request.data)
         if serializer.is_valid():
             serializer.save()
             return Response(
-                {"message": "Student registered successfully."},
+                {'message': 'Student registered successfully.'},
                 status=status.HTTP_201_CREATED
             )
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+
 class TeacherRegisterAPIView(APIView):
     """
-    API View for teacher registration.
+    Handles teacher registration.
+
+    POST: Validates against email whitelist and creates a new teacher user.
     """
     def post(self, request):
         serializer = TeacherRegistrationSerializer(data=request.data)
         if serializer.is_valid():
             serializer.save()
             return Response(
-                {"message": "Teacher registered successfully."},
+                {'message': 'Teacher registered successfully.'},
                 status=status.HTTP_201_CREATED
             )
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+
+# -----------------------------------------------------------------------------
+# Authentication Views
+# -----------------------------------------------------------------------------
 class StudentLoginAPIView(APIView):
     """
-    API View for student login (varsity_id + password).
+    Authenticates a student using varsity_id and password.
+
+    POST: Returns JWT tokens upon successful authentication.
     """
     def post(self, request):
         serializer = StudentLoginSerializer(data=request.data)
@@ -60,24 +80,28 @@ class StudentLoginAPIView(APIView):
             try:
                 user = User.objects.get(varsity_id=varsity_id, role='student')
             except User.DoesNotExist:
-                return Response({"error": "Invalid credentials."}, status=status.HTTP_401_UNAUTHORIZED)
+                return Response({'error': 'Invalid credentials.'}, status=status.HTTP_401_UNAUTHORIZED)
+
             if not user.check_password(password):
-                return Response({"error": "Invalid credentials."}, status=status.HTTP_401_UNAUTHORIZED)
+                return Response({'error': 'Invalid credentials.'}, status=status.HTTP_401_UNAUTHORIZED)
 
             refresh = RefreshToken.for_user(user)
             return Response(
                 {
-                    "refresh": str(refresh),
-                    "access": str(refresh.access_token),
-                    "role": user.role
+                    'refresh': str(refresh),
+                    'access': str(refresh.access_token),
+                    'role': user.role,
                 },
                 status=status.HTTP_200_OK
             )
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+
 class TeacherLoginAPIView(APIView):
     """
-    API View for teacher login (email + password).
+    Authenticates a teacher using email and password.
+
+    POST: Returns JWT tokens upon successful authentication.
     """
     def post(self, request):
         serializer = TeacherLoginSerializer(data=request.data)
@@ -89,38 +113,51 @@ class TeacherLoginAPIView(APIView):
                 refresh = RefreshToken.for_user(user)
                 return Response(
                     {
-                        "refresh": str(refresh),
-                        "access": str(refresh.access_token),
-                        "role": user.role
+                        'refresh': str(refresh),
+                        'access': str(refresh.access_token),
+                        'role': user.role,
                     },
                     status=status.HTTP_200_OK
                 )
-            return Response({"error": "Invalid credentials."}, status=status.HTTP_401_UNAUTHORIZED)
+            return Response({'error': 'Invalid credentials.'}, status=status.HTTP_401_UNAUTHORIZED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
+# -----------------------------------------------------------------------------
+# Logout View
+# -----------------------------------------------------------------------------
 class LogoutAPIView(APIView):
+    """
+    Handles user logout by blacklisting the refresh token.
+
+    POST: Blacklists the provided JWT refresh token.
+    """
     permission_classes = [IsAuthenticated]
 
     def post(self, request):
+        refresh_token = request.data.get('refresh')
+        if not refresh_token:
+            return Response({'detail': 'Refresh token is required.'}, status=status.HTTP_400_BAD_REQUEST)
         try:
-            refresh_token = request.data.get("refresh")
             token = RefreshToken(refresh_token)
             token.blacklist()
-            return Response({"detail": "Logout successful."}, status=status.HTTP_205_RESET_CONTENT)
-        except Exception as e:
-            return Response({"detail": "Invalid refresh token."}, status=status.HTTP_400_BAD_REQUEST)
-        
+            return Response({'detail': 'Logout successful.'}, status=status.HTTP_205_RESET_CONTENT)
+        except TokenError:
+            return Response({'detail': 'Invalid refresh token.'}, status=status.HTTP_400_BAD_REQUEST)
 
+
+# -----------------------------------------------------------------------------
+# User Profile & Management View
+# -----------------------------------------------------------------------------
 class UserRegistrationAPIView(APIView):
     """
-    GET: retrieve profile
-    POST: generic registration
-    PUT: update profile
+    GET: Retrieves the authenticated user's profile.
+    POST: Creates a new generic user (any role).
+    PUT: Updates the authenticated user's profile partially.
     """
+    permission_classes = [IsAuthenticated]
+
     def get(self, request):
-        if not request.user or not request.user.is_authenticated:
-            return Response(status=status.HTTP_401_UNAUTHORIZED)
         serializer = UserDetailSerializer(request.user)
         return Response(serializer.data)
 
@@ -132,12 +169,8 @@ class UserRegistrationAPIView(APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     def put(self, request):
-        if not request.user or not request.user.is_authenticated:
-            return Response(status=status.HTTP_401_UNAUTHORIZED)
         serializer = UserSerializer(request.user, data=request.data, partial=True)
         if serializer.is_valid():
             user = serializer.save()
-            return Response(UserDetailSerializer(user).data)
+            return Response(UserDetailSerializer(user).data, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-

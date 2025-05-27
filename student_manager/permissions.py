@@ -1,11 +1,20 @@
+"""
+Custom permission classes for the student_manager app.
+"""
 
-# student_manager/permissions.py
+# Relative Path: student_manager/permissions.py
 
 from rest_framework import permissions
 
+
 class IsTeacher(permissions.BasePermission):
     """
-    Custom permission to allow only teacher users.
+    Allows access only to authenticated users with the role of 'teacher'.
     """
+
     def has_permission(self, request, view):
-        return request.user and request.user.is_authenticated and request.user.role == 'teacher'
+        return (
+            request.user
+            and request.user.is_authenticated
+            and getattr(request.user, "role", None) == "teacher"
+        )

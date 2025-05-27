@@ -1,7 +1,15 @@
+"""
+URL configurations for the accounts app.
 
-# accounts/urls.py
+Defines authentication, registration, login, logout, and profile endpoints
+using Django REST Framework and Simple JWT views.
+"""
+
+# Relative Path: accounts/urls.py
 
 from django.urls import path
+from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
+
 from .views import (
     StudentRegisterAPIView,
     TeacherRegisterAPIView,
@@ -11,62 +19,61 @@ from .views import (
     UserRegistrationAPIView,
 )
 
-from rest_framework_simplejwt.views import (
-    TokenObtainPairView,
-    TokenRefreshView,
-)
-
+# -----------------------------------------------------------------------------
+# URL Patterns
+# -----------------------------------------------------------------------------
 urlpatterns = [
-    # Student Registration Endpoint
+    # Student Registration
     path(
         'students/register/',
         StudentRegisterAPIView.as_view(),
         name='student-register'
     ),
 
-    # Teacher Registration Endpoint
+    # Teacher Registration
     path(
         'teachers/register/',
         TeacherRegisterAPIView.as_view(),
         name='teacher-register'
     ),
 
-    # Student Login Endpoint
+    # Student Login
     path(
         'students/login/',
         StudentLoginAPIView.as_view(),
         name='student-login'
     ),
 
-    # Teacher Login Endpoint
+    # Teacher Login
     path(
         'teachers/login/',
         TeacherLoginAPIView.as_view(),
         name='teacher-login'
     ),
 
-    # Logout Endpoint
-    path('logout/', 
-         LogoutAPIView.as_view(), 
-         name='token_logout'
+    # Logout (Blacklist Refresh Token)
+    path(
+        'logout/',
+        LogoutAPIView.as_view(),
+        name='token-logout'
     ),
 
-    # User Profile & Generic Registration/Update Endpoint
+    # User Profile & Update (GET, PUT)
     path(
         'user/',
         UserRegistrationAPIView.as_view(),
         name='user-profile'
     ),
 
-    # Get Token Pair
-    path('api/token/', 
-         TokenObtainPairView.as_view(), 
-         name='token_obtain_pair'
+    # JWT Token Management
+    path(
+        'api/token/',
+        TokenObtainPairView.as_view(),
+        name='token_obtain_pair'
     ),
-
-    # Get Refresh Token
-    path('api/token/refresh/', 
-         TokenRefreshView.as_view(), 
-         name='token_refresh'
+    path(
+        'api/token/refresh/',
+        TokenRefreshView.as_view(),
+        name='token_refresh'
     ),
 ]
